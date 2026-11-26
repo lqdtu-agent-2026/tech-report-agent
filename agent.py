@@ -5,7 +5,8 @@ import yaml
 from dotenv import load_dotenv
 from openai import OpenAI
 from pypdf import PdfReader
-
+import logging
+logging.getLogger("pypdf").setLevel(logging.ERROR)
 load_dotenv()
 
 client = OpenAI(
@@ -84,7 +85,13 @@ QUY TẮC HOẠT ĐỘNG:
 1. **Đọc tài liệu PDF**: Khi người dùng cung cấp đường dẫn file `.pdf` (ví dụ: `report.pdf` hoặc `/home/.../file.pdf`), hãy gọi công cụ `read_pdf` để lấy nội dung tài liệu trước.
 2. **Sử dụng Skill**: Khi yêu cầu của người dùng khớp với mô tả của một Skill ở trên, hãy gọi công cụ `load_skill` với `skill_name` tương ứng để đọc quy trình hướng dẫn chi tiết.
 3. Bạn có thể gọi cả `read_pdf` và `load_skill` cùng lúc hoặc lần lượt trước khi tổng hợp câu trả lời cuối cùng.
-4. Luôn bám sát nội dung thực tế trích xuất từ PDF, không tự bịa thêm số liệu không có trong tài liệu."""
+4. Luôn bám sát nội dung thực tế trích xuất từ PDF, không tự bịa thêm số liệu không có trong tài liệu.
+5. **Ngắn gọn & trọng tâm**: Trình bày súc tích, đi thẳng vào kết luận và các phát hiện cốt lõi kèm dẫn chứng cụ thể (trang, bảng, hình, `file:line`); tránh tóm tắt dài dòng hoặc lặp lại nội dung.
+
+### Domain-Specific Calibration & OCR Guardrails
+1. **Exact/Systems Algorithms vs. Stochastic Models:** For systems, hardware-aware, or exact mathematical equivalence papers (e.g., FlashAttention, quantization kernels), verify mathematical equivalence and wall-clock/memory profiling. Do NOT penalize authors for omitting p-values, Wilcoxon tests, or multi-seed CIs on accuracy/perplexity when the algorithm computes the exact same mathematical function as the baseline.
+2. **PDF Parsing Sanity Check:** Academic PDFs frequently suffer from font-encoding artifacts during text extraction (e.g., `×` parsed as `%` or `x`, missing exponents). Before flagging a "numerical contradiction" (like `2.4%` vs `2.4×`), check if it is a single-character OCR/encoding artifact. Never build a Red Flag on a suspected font-parsing typo.
+3. **Codebase Verification:** Before requesting authors to "release code", explicitly scan the Abstract, end of Introduction, and Reproducibility/Appendix sections for `github.com`, `huggingface.co`, or `gitlab.com` URLs."""
 
 
 def run_agent(user_prompt):
